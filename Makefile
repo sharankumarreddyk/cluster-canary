@@ -13,6 +13,8 @@ endif
 
 .PHONY: help install install-pip hooks lint format typecheck test test-fast test-all check \
         dev-up dev-down dev-reset dev-logs mlflow-ui minio-ui \
+        lab-up lab-up-kind lab-up-chaos lab-up-observability lab-up-workloads lab-up-chaos-plans \
+        lab-build-leaky lab-down lab-reset lab-status lab-scrape \
         data-pull data-push train serve drift retrain build clean
 
 help: ## Show this help
@@ -86,6 +88,63 @@ data-pull: ## Pull DVC-tracked data
 
 data-push: ## Push DVC-tracked data
 	$(RUN) dvc push
+
+# --- Phase 1: data lab + scraper ----------------------------------------------
+lab-up: lab-up-kind lab-up-chaos lab-up-observability lab-up-workloads lab-up-chaos-plans ## Bring up kind + chaos-mesh + Prometheus + workloads + chaos
+	@echo ""
+	@echo "  Prometheus UI: http://localhost:9090"
+	@echo "  Run 'make lab-scrape' once you've let the cluster run for a while."
+
+lab-up-kind: ## Create the kind canary-lab cluster
+	@if kind get clusters | grep -q '^canary-lab$$'; then \
+	  echo "[lab] kind cluster canary-lab already exists — skipping create"; \
+	else \
+	  kind create cluster --config infra/lab/kind-config.yaml; \
+	fi
+	kubectl cluster-info --context kind-canary-lab
+
+lab-up-chaos: ## Install chaos-mesh into the cluster
+	bash infra/lab/chaos-mesh/install.sh
+
+lab-up-observability: ## Apply Prometheus + kube-state-metrics
+	kubectl apply -f infra/lab/observability/
+
+lab-up-workloads: lab-build-leaky ## Apply workloads (nginx, postgres, redis, leaky-flask, go-batch, fluent-bit)
+	kubectl apply -f infra/lab/workloads/namespace.yaml
+	kubectl apply -f infra/lab/workloads/nginx.yaml
+	kubectl apply -f infra/lab/workloads/postgres.yaml
+	kubectl apply -f infra/lab/workloads/redis.yaml
+	kubectl apply -f infra/lab/workloads/leaky-flask/deployment.yaml
+	kubectl apply -f infra/lab/workloads/go-batch.yaml
+	kubectl apply -f infra/lab/workloads/fluent-bit.yaml
+
+lab-up-chaos-plans: ## Apply chaos plans (instant-oom + random-crash schedule)
+	kubectl apply -f infra/lab/chaos-plans/instant-oom.yaml
+	kubectl apply -f infra/lab/chaos-plans/random-crash.yaml
+
+lab-build-leaky: ## Build leaky-flask image and load into kind
+	docker build -t cluster-canary/leaky-flask:dev infra/lab/workloads/leaky-flask
+	kind load docker-image cluster-canary/leaky-flask:dev --name canary-lab
+
+lab-down: ## Delete the kind canary-lab cluster
+	-kind delete cluster --name canary-lab
+
+lab-reset: lab-down lab-up ## Tear down and rebuild (destructive)
+
+lab-status: ## Show cluster + pod status
+	kubectl get nodes
+	@echo ""
+	@echo "--- observability ---"
+	kubectl -n observability get pods
+	@echo ""
+	@echo "--- workloads ---"
+	kubectl -n workloads get pods
+	@echo ""
+	@echo "--- chaos-mesh ---"
+	kubectl -n chaos-mesh get pods
+
+lab-scrape: ## Run a 24h scrape of Prometheus → parquet (uses env: SCRAPE_START, SCRAPE_END, PROMETHEUS_URL)
+	$(RUN) python -m cluster_canary.pipelines.scrape
 
 # --- pipeline (filled in across phases) ---------------------------------------
 train: ## Train model (Phase 3+)

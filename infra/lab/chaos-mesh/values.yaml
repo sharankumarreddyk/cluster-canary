@@ -1,0 +1,33 @@
+# chaos-mesh 2.7.x helm values for the kind canary-lab cluster.
+# Critical setting: chaosDaemon.runtime=containerd because kind uses containerd,
+# not Docker. Missing this is the #1 chaos-mesh-on-kind setup failure mode.
+
+dashboard:
+  create: false                  # headless data-gen — no UI needed
+  securityMode: false            # if you re-enable dashboard, leave this off ONLY for local kind
+
+controllerManager:
+  replicaCount: 1                # chart default is 3 — pends on single-node kind
+  leaderElection:
+    enabled: false
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits:   { cpu: 500m, memory: 256Mi }
+
+chaosDaemon:
+  runtime: containerd
+  socketPath: /run/containerd/containerd.sock
+  privileged: true               # required for cgroup / netns manipulation
+  hostNetwork: false
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits:   { cpu: 200m, memory: 128Mi }
+
+# Disable optional features we don't need for Phase 1.
+dnsServer:
+  create: false                  # only needed for DNSChaos
+prometheus:
+  create: false                  # we install our own (infra/lab/observability/)
+webhook:
+  certManager:
+    enabled: false               # chart self-signs; don't pull in cert-manager

@@ -779,6 +779,7 @@ dependencies = [
     { name = "optuna" },
     { name = "pandas" },
     { name = "prefect" },
+    { name = "prometheus-api-client" },
     { name = "prometheus-client" },
     { name = "pyarrow" },
     { name = "pydantic" },
@@ -829,6 +830,7 @@ requires-dist = [
     { name = "pandas-stubs", marker = "extra == 'dev'" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0" },
     { name = "prefect", specifier = ">=3.0,<4.0" },
+    { name = "prometheus-api-client", specifier = ">=0.5" },
     { name = "prometheus-client", specifier = ">=0.21" },
     { name = "pyarrow", specifier = ">=17.0" },
     { name = "pydantic", specifier = ">=2.7" },
@@ -3686,6 +3688,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d6/12/dde80bca1378f19ef5b45bbab75d30367796ff9358eafc21ff3c6aa43b55/prefect-3.7.1.tar.gz", hash = "sha256:7e1c59491f7d31f700539ed9084dade3b7e3bdb6c08b5a417c6a0a7502ba9c9d", size = 14056819, upload-time = "2026-05-16T02:43:21.545Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4b/88/bc1d779c8680e75fe77746511004a0963984b51aec65f5fb0bc64392c371/prefect-3.7.1-py3-none-any.whl", hash = "sha256:5113ecc7b6274eeea97bac29bdce9b45b3dd6bb5048202b8e5c4e2eacac5f968", size = 14933114, upload-time = "2026-05-16T02:43:17.972Z" },
+]
+
+[[package]]
+name = "prometheus-api-client"
+version = "0.7.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dateparser" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/09/a5/861a150ce50953c7bda35224a666c9fc073a14677e66d31ecb8873f10350/prometheus_api_client-0.7.2.tar.gz", hash = "sha256:ddc79ca905c6001aac31a15c42d362d410ce38847e762cecc56edc79c6012e05", size = 21749, upload-time = "2026-04-13T04:12:11.388Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/24/57c74f0e9d1bf6abd1afb19ca8a34075a5ae5f5bd767c796f61bf8c906f5/prometheus_api_client-0.7.2-py3-none-any.whl", hash = "sha256:826bec5b765dfde2127f5d24a8e6d4dbfd0f5fab3f70b552562c843220faa042", size = 22113, upload-time = "2026-04-13T04:12:09.963Z" },
 ]
 
 [[package]]

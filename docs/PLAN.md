@@ -151,8 +151,8 @@ Use Optuna for LightGBM hyperparams (50 trials). Use SHAP for feature attributio
 
 | Phase | Days | Deliverable | Acceptance |
 |---|---|---|---|
-| 0. Bootstrap from template | 1 | Fork `mlops-reference-template`; rename `mlops_template` → `cluster_canary`; verify `make check` green | `make check` passes |
-| 1. Data pipeline (synthetic) | 4 | `kind` cluster + workload manifests + `chaos-mesh` chaos plans + Prometheus scraper → parquet | 24h of synthetic data captured, > 100 OOM events labeled |
+| 0. Bootstrap from template | 1 | Fork `mlops-reference-template`; rename `mlops_template` → `cluster_canary`; verify `make check` green | `make check` passes — **✅ done 2026-05-18** |
+| 1. Data pipeline (synthetic) | 4 | `kind` cluster + workload manifests + `chaos-mesh` chaos plans + Prometheus scraper → parquet + OOM label generator | 24h of synthetic data captured, > 100 OOM events labeled — **✅ code-complete 2026-05-18; runtime pending (24 h offline run via `make lab-up && make lab-scrape`). See [`docs/lab.md`](lab.md).** |
 | 2. Data pipeline (real) | 3 | Alibaba trace 2018 sample (100 GB) ingested via DVC; harmonize schema with synthetic | Both datasets aligned on shared feature set |
 | 3. Features | 3 | `src/cluster_canary/features/` — rolling windows, image-lineage features, label generation (`event_within_30min`) | Leakage audit green on temporal split |
 | 4. Modeling | 5 | Baseline + LightGBM, MLflow tracked, calibration, SHAP. Sliced metrics by namespace and workload type. | Brier ≤ 0.10, precision @ recall=0.8 ≥ 0.5 |

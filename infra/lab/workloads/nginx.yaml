@@ -1,0 +1,30 @@
+# Baseline well-behaved workload — negative-class signal for the model.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: workloads
+  labels:
+    app: nginx
+    canary.lab/profile: baseline
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: nginx }
+  template:
+    metadata:
+      labels:
+        app: nginx
+        canary.lab/profile: baseline
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports: [{ containerPort: 80 }]
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits:   { cpu: 200m, memory: 128Mi }
+          readinessProbe:
+            tcpSocket: { port: 80 }
+            initialDelaySeconds: 2

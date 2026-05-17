@@ -1,0 +1,47 @@
+# CronJob loop simulating a Go-shaped batch worker — CPU spikes + GC pauses,
+# clean exits most of the time, occasional non-zero exit for crash-loop signal.
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: go-batch
+  namespace: workloads
+  labels:
+    app: go-batch
+    canary.lab/profile: batch
+spec:
+  schedule: "*/3 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: go-batch
+            canary.lab/profile: batch
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: worker
+              image: alpine:3.20
+              command: [sh, -c]
+              args:
+                # CPU-burn for ~30s; 10% chance of non-zero exit (crash signal).
+                - |
+                  set -e
+                  echo "batch worker start pid=$$"
+                  end=$(( $(date +%s) + 30 ))
+                  while [ "$(date +%s)" -lt "$end" ]; do
+                    awk 'BEGIN{for(i=0;i<200000;i++)x+=sin(i)}' >/dev/null
+                  done
+                  if [ "$(awk 'BEGIN{srand();print int(rand()*100)}')" -lt 10 ]; then
+                    echo "batch worker crashing on purpose"
+                    exit 137
+                  fi
+                  echo "batch worker done"
+              resources:
+                requests: { cpu: 200m, memory: 64Mi }
+                limits:   { cpu: 800m, memory: 128Mi }

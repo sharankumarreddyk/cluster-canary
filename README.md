@@ -8,7 +8,7 @@
 
 A proactive ML layer for cluster health. Pairs with [`kubeai-ops`](https://github.com/sharankumarreddyk/kubeai-ops) (reactive incident response) so on-call gets paged when something is *about* to break, with 10+ minutes of head room.
 
-> **Status:** Phase 0 — bootstrapped from [`mlops-reference-template`](https://github.com/sharankumarreddyk/mlops-reference-template). See [`docs/PLAN.md`](docs/PLAN.md) for the 10-phase roadmap.
+> **Status:** Phase 1 — synthetic data lab is code-complete; the 24 h data run is ready to kick off. See [`docs/PLAN.md`](docs/PLAN.md) for the 10-phase roadmap and [`docs/lab.md`](docs/lab.md) for how to bring up the lab.
 
 ---
 
@@ -99,7 +99,7 @@ A 30-minute lead time is at the optimistic end of the published prior (closest a
 | Phase | Status |
 |---|---|
 | 0. Bootstrap from template | ✅ done 2026-05-18 |
-| 1. Data pipeline (synthetic — kind + chaos-mesh) | pending |
+| 1. Data pipeline (synthetic — kind + chaos-mesh) | ✅ code-complete 2026-05-18; runtime pending (24 h offline run) |
 | 2. Data pipeline (Alibaba trace 2018 sample) | pending |
 | 3. Features (rolling windows, image lineage, label generation) | pending |
 | 4. Modeling (LightGBM, calibration, SHAP, sliced metrics) | pending |

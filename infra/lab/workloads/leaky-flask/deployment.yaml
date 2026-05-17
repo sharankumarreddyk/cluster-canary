@@ -1,0 +1,50 @@
+# Slow-leak workload. The image is built locally via `make lab-build-leaky`
+# and loaded into the kind cluster via `kind load docker-image`.
+#
+# Tight memory limit (384 MiB) + 4 MiB/min leak → OOM after ~90-100 minutes
+# of leak time (60 s pre-leak quiet period excluded). Gives 30-min lead time
+# windows several samples deep before the kill.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leaky-flask
+  namespace: workloads
+  labels:
+    app: leaky-flask
+    canary.lab/profile: leaky-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: leaky-flask }
+  template:
+    metadata:
+      labels:
+        app: leaky-flask
+        canary.lab/profile: leaky-app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: leaky
+          image: cluster-canary/leaky-flask:dev
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: LEAK_RATE_MB_PER_MIN, value: "4" }
+            - { name: LEAK_START_AFTER_SEC, value: "120" }
+            - { name: LEAK_MAX_MB,          value: "1024" }
+            - { name: WORKER_ID,            valueFrom: { fieldRef: { fieldPath: metadata.name } } }
+          ports: [{ containerPort: 5000, name: http }]
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { cpu: 400m, memory: 384Mi }
+          readinessProbe:
+            httpGet: { path: /readyz, port: 5000 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: 5000 }
+            initialDelaySeconds: 30
+            periodSeconds: 15

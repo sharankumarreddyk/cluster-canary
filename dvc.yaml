@@ -1,36 +1,29 @@
-# DVC pipeline — stage templates. Fill in commands, deps, and outs per phase.
-# Run `dvc repro` once a stage's command is real and inputs exist.
+# DVC pipeline — fill in stages as each phase lands.
+# Run `dvc repro <stage>` after the stage's deps/outs exist.
 stages:
-  ingest:
-    cmd: python -m cluster_canary.pipelines.ingest
+  scrape:
+    cmd: python -m cluster_canary.pipelines.scrape
     deps:
-      - src/cluster_canary/data/
-      - src/cluster_canary/pipelines/ingest.py
+      - src/cluster_canary/data/scraper.py
+      - src/cluster_canary/data/label_generator.py
+      - src/cluster_canary/data/schema.py
+      - src/cluster_canary/pipelines/scrape.py
     outs:
-      - data/raw/
-    desc: "Phase 1 — Pull source data into data/raw/"
-
-  validate:
-    cmd: python -m cluster_canary.pipelines.validate
-    deps:
-      - src/cluster_canary/data/validate.py
-      - src/cluster_canary/pipelines/validate.py
-      - data/raw/
-    outs:
-      - data/interim/
+      - data/raw/scrape/
+      - data/interim/labeled/
     metrics:
-      - reports/eval/validation_metrics.json:
+      - reports/eval/label_metrics.json:
           cache: false
-    desc: "Phase 1 — Great Expectations validation + cleaning to interim"
+    desc: "Phase 1 — Scrape Prometheus → parquet + generate event_within_30min labels"
 
   features:
     cmd: python -m cluster_canary.pipelines.features
     deps:
       - src/cluster_canary/features/
-      - data/interim/
+      - data/interim/labeled/
     outs:
       - data/processed/
-    desc: "Phase 2 — Feature engineering + temporal/group split"
+    desc: "Phase 3 — Feature engineering + temporal/group split"
 
   train:
     cmd: python -m cluster_canary.training.train
@@ -41,4 +34,4 @@ stages:
     metrics:
       - reports/eval/metrics.json:
           cache: false
-    desc: "Phase 3 — Train + log to MLflow"
+    desc: "Phase 4 — Train + log to MLflow"

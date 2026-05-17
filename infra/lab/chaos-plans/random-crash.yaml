@@ -1,0 +1,29 @@
+# Random pod-kill on a 7-minute schedule — produces CrashLoopBackOff data and
+# generic-failure negative examples (kills that are NOT OOMKilled).
+#
+# chaos-mesh 2.x removed inline `spec.scheduler.cron` — the Schedule CRD
+# wraps the chaos spec under `spec.podChaos` and provides cron-style timing.
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: random-crash
+  namespace: workloads
+spec:
+  schedule: "*/7 * * * *"
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
+  historyLimit: 5
+  type: PodChaos
+  podChaos:
+    action: pod-kill
+    # `fixed-percent` not `random-max-percent` — the latter rounds to 0 when
+    # (value × matched pods) < 1, which is easy to hit with 2 matched pods.
+    mode: fixed-percent
+    value: "30"
+    gracePeriod: 0
+    selector:
+      namespaces:
+        - workloads
+      labelSelectors:
+        canary.lab/profile: leaky-app

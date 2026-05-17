@@ -47,6 +47,7 @@ dependencies = [
     "click>=8.1",
     "structlog>=24.4",
     "prometheus-client>=0.21",
+    "prometheus-api-client>=0.5",  # Phase 1: scraper pulls metrics via Prom HTTP API
     "tenacity>=9.0",
 ]
 
@@ -85,7 +86,7 @@ packages = ["src/cluster_canary"]
 target-version = "py312"
 line-length = 100
 src = ["src", "tests"]
-extend-exclude = ["notebooks", "data", "models", "reports"]
+extend-exclude = ["notebooks", "data", "models", "reports", "infra"]
 
 [tool.ruff.lint]
 select = [

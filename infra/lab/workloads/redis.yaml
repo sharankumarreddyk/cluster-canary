@@ -1,0 +1,34 @@
+# Redis with `chaos-target: instant-oom` label — picked up by chaos-plans/instant-oom.yaml.
+# Tight memory limit so chaos-mesh's "allocate 2GB" actually trips the cgroup ceiling.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: workloads
+  labels:
+    app: redis
+    canary.lab/profile: cache
+    chaos-target: instant-oom
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: redis }
+  template:
+    metadata:
+      labels:
+        app: redis
+        canary.lab/profile: cache
+        chaos-target: instant-oom
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args: [--maxmemory, 200mb, --maxmemory-policy, allkeys-lru]
+          ports: [{ containerPort: 6379 }]
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { cpu: 300m, memory: 256Mi }
+          readinessProbe:
+            exec: { command: [redis-cli, ping] }
+            initialDelaySeconds: 2

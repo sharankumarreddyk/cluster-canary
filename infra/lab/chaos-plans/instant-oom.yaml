@@ -1,0 +1,28 @@
+# Instant OOM — primary positive-class label generator.
+#
+# Target: redis pod (label `chaos-target: instant-oom`).
+# Allocates 2 GB inside a pod with `resources.limits.memory: 256Mi` →
+# cgroup OOM-killer fires within seconds. kubelet records
+# `lastState.terminated.reason: OOMKilled` and ksm exports the corresponding
+# `kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}=1`.
+#
+# Re-apply periodically during data generation; one-shot per apply.
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: instant-oom
+  namespace: workloads
+spec:
+  mode: one
+  selector:
+    namespaces:
+      - workloads
+    labelSelectors:
+      chaos-target: instant-oom
+  stressors:
+    memory:
+      workers: 2
+      size: "2GB"        # absolute, exceeds redis pod's 256Mi limit
+  duration: "30s"
+  gracePeriod: 0

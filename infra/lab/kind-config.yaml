@@ -1,0 +1,68 @@
+# Local Kubernetes cluster for cluster-canary Phase 1 data generation.
+# Sized for a 16 GB MacBook with Docker Desktop on cgroup v2.
+# Run via `make lab-up` (which calls `kind create cluster --config infra/lab/kind-config.yaml`).
+#
+# Why these choices:
+# - 3 workers + control-plane so chaos can spread pods and we get cross-node failure signal.
+# - MemoryQoS feature gate enables cgroup v2 `memory.high` throttling — without it,
+#   StressChaos memory pressure jumps from "fine" to "OOM" with no gradient, losing the
+#   pre-failure signal that's the whole point of cluster-canary.
+# - evictionHard memory.available<200Mi triggers realistic node-pressure evictions.
+# - maxPods 60 per worker is generous for the ~25-pod target footprint with headroom.
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: canary-lab
+
+featureGates:
+  MemoryQoS: true
+
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            system-reserved: "cpu=200m,memory=512Mi"
+    extraPortMappings:
+      - containerPort: 30090     # Prometheus NodePort
+        hostPort: 9090
+        protocol: TCP
+
+  - role: worker
+    labels:
+      canary.lab/tier: workload
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            max-pods: "60"
+            eviction-hard: "memory.available<200Mi"
+
+  - role: worker
+    labels:
+      canary.lab/tier: workload
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            max-pods: "60"
+            eviction-hard: "memory.available<200Mi"
+
+  - role: worker
+    labels:
+      canary.lab/tier: workload
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            max-pods: "60"
+            eviction-hard: "memory.available<200Mi"
+
+networking:
+  apiServerAddress: "127.0.0.1"
+  disableDefaultCNI: false
