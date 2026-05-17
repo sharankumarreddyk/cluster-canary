@@ -1,0 +1,10 @@
+[core]
+    remote = minio
+    autostage = true
+
+['remote "minio"']
+    url = s3://mlp1-dvc
+    endpointurl = http://localhost:9000
+    use_ssl = false
+    access_key_id = minioadmin
+    secret_access_key = minioadmin

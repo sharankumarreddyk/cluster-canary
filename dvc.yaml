@@ -1,0 +1,44 @@
+# DVC pipeline — stage templates. Fill in commands, deps, and outs per phase.
+# Run `dvc repro` once a stage's command is real and inputs exist.
+stages:
+  ingest:
+    cmd: python -m cluster_canary.pipelines.ingest
+    deps:
+      - src/cluster_canary/data/
+      - src/cluster_canary/pipelines/ingest.py
+    outs:
+      - data/raw/
+    desc: "Phase 1 — Pull source data into data/raw/"
+
+  validate:
+    cmd: python -m cluster_canary.pipelines.validate
+    deps:
+      - src/cluster_canary/data/validate.py
+      - src/cluster_canary/pipelines/validate.py
+      - data/raw/
+    outs:
+      - data/interim/
+    metrics:
+      - reports/eval/validation_metrics.json:
+          cache: false
+    desc: "Phase 1 — Great Expectations validation + cleaning to interim"
+
+  features:
+    cmd: python -m cluster_canary.pipelines.features
+    deps:
+      - src/cluster_canary/features/
+      - data/interim/
+    outs:
+      - data/processed/
+    desc: "Phase 2 — Feature engineering + temporal/group split"
+
+  train:
+    cmd: python -m cluster_canary.training.train
+    deps:
+      - src/cluster_canary/models/
+      - src/cluster_canary/training/
+      - data/processed/
+    metrics:
+      - reports/eval/metrics.json:
+          cache: false
+    desc: "Phase 3 — Train + log to MLflow"
