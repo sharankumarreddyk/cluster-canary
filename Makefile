@@ -16,6 +16,7 @@ endif
         lab-up lab-up-kind lab-up-chaos lab-up-observability lab-up-workloads lab-up-chaos-plans \
         lab-build-leaky lab-down lab-reset lab-status lab-scrape \
         alibaba-fetch alibaba-fetch-small alibaba-harmonize alibaba-label alibaba-pipeline \
+        features \
         data-pull data-push train serve drift retrain build clean
 
 help: ## Show this help
@@ -162,6 +163,10 @@ alibaba-label: ## Run the Alibaba OOM detector + window-labeler
 
 alibaba-pipeline: ## End-to-end Phase 2: fetch + harmonize + label
 	$(RUN) python -m cluster_canary.pipelines.alibaba
+
+# --- Phase 3: feature engineering ---------------------------------------------
+features: ## Build features + 60/20/20 temporal split → data/processed/{train,val,test}.parquet
+	$(RUN) python -m cluster_canary.pipelines.features
 
 # --- pipeline (filled in across phases) ---------------------------------------
 train: ## Train model (Phase 3+)

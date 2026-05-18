@@ -34,10 +34,17 @@ stages:
     cmd: python -m cluster_canary.pipelines.features
     deps:
       - src/cluster_canary/features/
+      - src/cluster_canary/pipelines/features.py
       - data/interim/labeled/
+      - data/interim/alibaba_labeled/
     outs:
       - data/processed/
-    desc: "Phase 3 — Feature engineering + temporal/group split"
+    metrics:
+      - reports/eval/feature_metrics.json:
+          cache: false
+      - reports/eval/split_metrics.json:
+          cache: false
+    desc: "Phase 3 — Feature engineering + 60/20/20 temporal split"
 
   train:
     cmd: python -m cluster_canary.training.train
