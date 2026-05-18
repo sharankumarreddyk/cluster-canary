@@ -8,7 +8,7 @@
 
 A proactive ML layer for cluster health. Pairs with [`kubeai-ops`](https://github.com/sharankumarreddyk/kubeai-ops) (reactive incident response) so on-call gets paged when something is *about* to break, with 10+ minutes of head room.
 
-> **Status:** Phase 1 — synthetic data lab is code-complete; the 24 h data run is ready to kick off. See [`docs/PLAN.md`](docs/PLAN.md) for the 10-phase roadmap and [`docs/lab.md`](docs/lab.md) for how to bring up the lab.
+> **Status:** Phase 2 — Alibaba 2018 ingest + harmonizer + OOM detector are code-complete. Phase 1 synthetic lab is also code-complete and runnable. See [`docs/PLAN.md`](docs/PLAN.md), [`docs/lab.md`](docs/lab.md), and [`docs/alibaba_schema_alignment.md`](docs/alibaba_schema_alignment.md).
 
 ---
 
@@ -100,7 +100,7 @@ A 30-minute lead time is at the optimistic end of the published prior (closest a
 |---|---|
 | 0. Bootstrap from template | ✅ done 2026-05-18 |
 | 1. Data pipeline (synthetic — kind + chaos-mesh) | ✅ code-complete 2026-05-18; runtime pending (24 h offline run) |
-| 2. Data pipeline (Alibaba trace 2018 sample) | pending |
+| 2. Data pipeline (Alibaba trace 2018 sample) | ✅ code-complete 2026-05-18; runtime pending (30 GB download) |
 | 3. Features (rolling windows, image lineage, label generation) | pending |
 | 4. Modeling (LightGBM, calibration, SHAP, sliced metrics) | pending |
 | 5. Serving (in-cluster BentoML gRPC, p95 < 50 ms) | pending |

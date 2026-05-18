@@ -15,6 +15,7 @@ endif
         dev-up dev-down dev-reset dev-logs mlflow-ui minio-ui \
         lab-up lab-up-kind lab-up-chaos lab-up-observability lab-up-workloads lab-up-chaos-plans \
         lab-build-leaky lab-down lab-reset lab-status lab-scrape \
+        alibaba-fetch alibaba-fetch-small alibaba-harmonize alibaba-label alibaba-pipeline \
         data-pull data-push train serve drift retrain build clean
 
 help: ## Show this help
@@ -145,6 +146,22 @@ lab-status: ## Show cluster + pod status
 
 lab-scrape: ## Run a 24h scrape of Prometheus → parquet (uses env: SCRAPE_START, SCRAPE_END, PROMETHEUS_URL)
 	$(RUN) python -m cluster_canary.pipelines.scrape
+
+# --- Phase 2: Alibaba 2018 trace ----------------------------------------------
+alibaba-fetch: ## Download + extract Alibaba 2018 trace (~30 GB compressed; budget hours)
+	$(RUN) python -m cluster_canary.data.alibaba_ingest
+
+alibaba-fetch-small: ## Just the small files (machine_meta + container_meta + batch_task; ~127 MB)
+	$(RUN) python -m cluster_canary.data.alibaba_ingest --only machine_meta container_meta batch_task
+
+alibaba-harmonize: ## CSV → long-form parquet (idempotent)
+	$(RUN) python -m cluster_canary.data.alibaba_harmonize
+
+alibaba-label: ## Run the Alibaba OOM detector + window-labeler
+	$(RUN) python -m cluster_canary.data.alibaba_oom_detector
+
+alibaba-pipeline: ## End-to-end Phase 2: fetch + harmonize + label
+	$(RUN) python -m cluster_canary.pipelines.alibaba
 
 # --- pipeline (filled in across phases) ---------------------------------------
 train: ## Train model (Phase 3+)

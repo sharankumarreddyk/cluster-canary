@@ -16,6 +16,20 @@ stages:
           cache: false
     desc: "Phase 1 — Scrape Prometheus → parquet + generate event_within_30min labels"
 
+  alibaba:
+    cmd: python -m cluster_canary.pipelines.alibaba
+    deps:
+      - src/cluster_canary/data/alibaba_ingest.py
+      - src/cluster_canary/data/alibaba_harmonize.py
+      - src/cluster_canary/data/alibaba_oom_detector.py
+      - src/cluster_canary/data/alibaba_schema.py
+      - src/cluster_canary/pipelines/alibaba.py
+    outs:
+      - data/raw/alibaba/
+      - data/interim/alibaba/
+      - data/interim/alibaba_labeled/
+    desc: "Phase 2 — Alibaba 2018 trace ingest + harmonize + window-label"
+
   features:
     cmd: python -m cluster_canary.pipelines.features
     deps:
