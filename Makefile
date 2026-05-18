@@ -16,7 +16,7 @@ endif
         lab-up lab-up-kind lab-up-chaos lab-up-observability lab-up-workloads lab-up-chaos-plans \
         lab-build-leaky lab-down lab-reset lab-status lab-scrape \
         alibaba-fetch alibaba-fetch-small alibaba-harmonize alibaba-label alibaba-pipeline \
-        features \
+        features train train-fast \
         data-pull data-push train serve drift retrain build clean
 
 help: ## Show this help
@@ -168,10 +168,14 @@ alibaba-pipeline: ## End-to-end Phase 2: fetch + harmonize + label
 features: ## Build features + 60/20/20 temporal split → data/processed/{train,val,test}.parquet
 	$(RUN) python -m cluster_canary.pipelines.features
 
-# --- pipeline (filled in across phases) ---------------------------------------
-train: ## Train model (Phase 3+)
-	$(RUN) python -m cluster_canary.training.train
+# --- Phase 4: train ----------------------------------------------------------
+train: ## Train baseline + LightGBM (Optuna 50-trial); MLflow-tracked → models/canary_model.txt
+	$(RUN) python -m cluster_canary.pipelines.train
 
+train-fast: ## Same as `train` with OPTUNA_N_TRIALS=5 — smoke test
+	OPTUNA_N_TRIALS=5 $(RUN) python -m cluster_canary.pipelines.train
+
+# --- pipeline (filled in across phases) ---------------------------------------
 serve: ## Launch BentoML inference service (Phase 4+)
 	$(RUN) bentoml serve src.cluster_canary.serving.service:ClusterCanaryService --port $${BENTOML_PORT:-3000}
 

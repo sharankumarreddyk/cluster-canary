@@ -47,12 +47,22 @@ stages:
     desc: "Phase 3 — Feature engineering + 60/20/20 temporal split"
 
   train:
-    cmd: python -m cluster_canary.training.train
+    cmd: python -m cluster_canary.pipelines.train
     deps:
       - src/cluster_canary/models/
       - src/cluster_canary/training/
+      - src/cluster_canary/pipelines/train.py
       - data/processed/
+    outs:
+      - models/canary_model.txt
+      - models/calibrator.pkl
+      - models/MODEL_CARD.md
+      - models/feature_list.json
     metrics:
-      - reports/eval/metrics.json:
+      - reports/eval/test_metrics.json:
           cache: false
-    desc: "Phase 4 — Train + log to MLflow"
+      - reports/eval/slice_metrics.json:
+          cache: false
+      - reports/eval/baseline_test_metrics.json:
+          cache: false
+    desc: "Phase 4 — Baseline + LightGBM (Optuna search) + calibration; MLflow-tracked"

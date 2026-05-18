@@ -39,6 +39,7 @@ dependencies = [
     "prefect>=3.0,<4.0",
     # Hyperparameter search
     "optuna>=4.0",
+    "optuna-integration[lightgbm]>=4.0",  # Phase 4: LightGBMPruningCallback split into a separate package in Optuna 4.x
     # Data quality
     "great-expectations>=1.0,<2.0",
     # Utilities
@@ -146,6 +147,7 @@ module = [
     "locust.*",
     "optuna.*",
     "mlflow.*",
+    "sklearn.*",
 ]
 ignore_missing_imports = true
 
