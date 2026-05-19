@@ -1,0 +1,13 @@
+{{- if .Values.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "cluster-canary.fullname" . }}
+  labels:
+    {{- include "cluster-canary.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "cluster-canary.selectorLabels" . | nindent 6 }}
+{{- end }}

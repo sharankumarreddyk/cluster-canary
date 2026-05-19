@@ -17,6 +17,7 @@ endif
         lab-build-leaky lab-down lab-reset lab-status lab-scrape \
         alibaba-fetch alibaba-fetch-small alibaba-harmonize alibaba-label alibaba-pipeline \
         features train train-fast \
+        serve serve-docker-build serve-docker-run loadtest helm-lint helm-template \
         data-pull data-push train serve drift retrain build clean
 
 help: ## Show this help
@@ -176,8 +177,26 @@ train-fast: ## Same as `train` with OPTUNA_N_TRIALS=5 — smoke test
 	OPTUNA_N_TRIALS=5 $(RUN) python -m cluster_canary.pipelines.train
 
 # --- pipeline (filled in across phases) ---------------------------------------
-serve: ## Launch BentoML inference service (Phase 4+)
-	$(RUN) bentoml serve src.cluster_canary.serving.service:ClusterCanaryService --port $${BENTOML_PORT:-3000}
+# --- Phase 5: serving ---------------------------------------------------------
+serve: ## Launch the BentoML inference service locally (loads models/ from CWD)
+	$(RUN) bentoml serve cluster_canary.serving.service:ClusterCanaryService --port $${BENTOML_PORT:-3000}
+
+serve-docker-build: ## Build the multi-stage Docker image for the inference sidecar
+	docker build -f infra/docker/Dockerfile.serving -t cluster-canary:dev .
+
+serve-docker-run: ## Run the Docker image locally on port 3000
+	docker run --rm -p 3000:3000 cluster-canary:dev
+
+loadtest: ## Run the locust load test against a running service (default: http://localhost:3000)
+	$(RUN) locust -f tests/loadtest.py --host $${SERVE_URL:-http://localhost:3000} \
+		--users $${LT_USERS:-200} --spawn-rate $${LT_SPAWN:-20} \
+		--run-time $${LT_DURATION:-5m} --html reports/loadtest.html
+
+helm-lint: ## Lint the Helm chart
+	helm lint infra/helm/cluster-canary
+
+helm-template: ## Render the Helm chart (sanity check before deploy)
+	helm template cluster-canary infra/helm/cluster-canary | head -80
 
 drift: ## Run drift detection (Phase 6+)
 	$(RUN) python -m cluster_canary.monitoring.drift

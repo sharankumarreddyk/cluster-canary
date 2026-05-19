@@ -8,7 +8,7 @@
 
 A proactive ML layer for cluster health. Pairs with [`kubeai-ops`](https://github.com/sharankumarreddyk/kubeai-ops) (reactive incident response) so on-call gets paged when something is *about* to break, with 10+ minutes of head room.
 
-> **Status:** Phase 4 — baseline + LightGBM (Optuna search) + isotonic calibration + SHAP top-3 explainer code-complete. Phases 1–4 runnable end-to-end once you've produced labeled parquet. See [`docs/PLAN.md`](docs/PLAN.md), [`docs/lab.md`](docs/lab.md), [`docs/alibaba_schema_alignment.md`](docs/alibaba_schema_alignment.md), [`docs/features.md`](docs/features.md), and [`docs/modeling.md`](docs/modeling.md).
+> **Status:** Phase 5 — BentoML serving + Helm chart + ArgoCD app + Docker + locust load test code-complete. Phases 1-5 runnable end-to-end. See [`docs/PLAN.md`](docs/PLAN.md), [`docs/lab.md`](docs/lab.md), [`docs/alibaba_schema_alignment.md`](docs/alibaba_schema_alignment.md), [`docs/features.md`](docs/features.md), [`docs/modeling.md`](docs/modeling.md), and [`docs/serving.md`](docs/serving.md).
 
 ---
 
@@ -103,7 +103,7 @@ A 30-minute lead time is at the optimistic end of the published prior (closest a
 | 2. Data pipeline (Alibaba trace 2018 sample) | ✅ code-complete 2026-05-18; runtime pending (30 GB download) |
 | 3. Features (rolling windows, image lineage, label generation) | ✅ code-complete 2026-05-18; runtime pending (`make features` after Phase 1/2 outputs exist) |
 | 4. Modeling (LightGBM, calibration, SHAP, sliced metrics) | ✅ code-complete 2026-05-18; runtime pending (`make train` after Phase 3 outputs exist) |
-| 5. Serving (in-cluster BentoML gRPC, p95 < 50 ms) | pending |
+| 5. Serving (in-cluster BentoML HTTP, p95 < 50 ms) | ✅ code-complete 2026-05-18; runtime pending (`make serve` after Phase 4 model exists) |
 | 6. Action router (PagerDuty / kubeai-ops / VPA) | pending |
 | 7. Monitoring (Evidently + Grafana) | pending |
 | 8. Retrain loop (Prefect + champion/challenger) | pending |

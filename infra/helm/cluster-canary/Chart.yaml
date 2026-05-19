@@ -1,0 +1,19 @@
+apiVersion: v2
+name: cluster-canary
+description: |
+  In-cluster pod failure predictor. Serves OOMKill / CrashLoopBackOff probability
+  for every running pod via gRPC, with top-3 SHAP contributors per prediction.
+  Pairs with kubeai-ops as its proactive layer.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - mlops
+  - kubernetes
+  - sre
+  - failure-prediction
+home: https://github.com/sharankumarreddyk/cluster-canary
+sources:
+  - https://github.com/sharankumarreddyk/cluster-canary
+maintainers:
+  - name: sharankumarreddyk

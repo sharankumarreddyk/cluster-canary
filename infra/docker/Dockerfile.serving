@@ -1,0 +1,74 @@
+# Multi-stage build for the cluster-canary inference sidecar.
+#
+# Target: < 300 MB final image.
+# - Stage 1 (builder): install deps into a relocatable prefix.
+# - Stage 2 (runtime): copy only the prefix + source + model files into a
+#   slim Python 3.12 base. libomp is required for LightGBM's native runtime
+#   on Linux — installed at runtime layer only.
+#
+# Build:    docker build -f infra/docker/Dockerfile.serving -t cluster-canary:dev .
+# Run:      docker run -p 3000:3000 cluster-canary:dev
+# Probes:   /healthz (liveness), /readyz (readiness), /metrics (Prom)
+
+FROM python:3.12-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /build
+
+# Build-time deps for any wheel that needs to compile from source.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+ && rm -rf /var/lib/apt/lists/*
+
+# Only the serving-critical packages; --no-deps where we can to keep the
+# transitive footprint small.
+RUN pip install --prefix=/install \
+    "bentoml>=1.3,<1.5" \
+    "lightgbm>=4.5" \
+    "scikit-learn>=1.5" \
+    "pydantic>=2.7" \
+    "structlog>=24.4" \
+    "prometheus-client>=0.21" \
+    "numpy>=1.26,<2.0"
+
+# -----------------------------------------------------------------------------
+
+FROM python:3.12-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    MLP1_LOG_LEVEL=INFO \
+    MODELS_DIR=/app/models
+
+# `libgomp1` provides libomp.so.1 for LightGBM's native runtime; `curl` is
+# used by the K8s probes baked into the image.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    curl \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /install /usr/local
+
+WORKDIR /app
+
+# Source + models — copy AFTER deps so the deps layer is cache-stable.
+COPY src/cluster_canary/ /app/cluster_canary/
+COPY models/ /app/models/
+
+# Non-root user — even sidecars should not run as 0.
+RUN useradd --create-home --shell /bin/bash canary \
+ && chown -R canary:canary /app
+USER canary
+
+EXPOSE 3000
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -fs http://localhost:3000/healthz || exit 1
+
+# `bentoml serve` finds the @bentoml.service class via the module path.
+CMD ["bentoml", "serve", "cluster_canary.serving.service:ClusterCanaryService", \
+     "--host", "0.0.0.0", "--port", "3000"]

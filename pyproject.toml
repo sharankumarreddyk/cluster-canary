@@ -151,6 +151,14 @@ module = [
 ]
 ignore_missing_imports = true
 
+# BentoML's `@bentoml.service` and `@bentoml.api` decorators aren't typed; in
+# strict mode that trips `disallow_untyped_decorators` for every method we
+# wrap. Disable for the serving module specifically — type-check the bodies,
+# just not the decorator-induced indirection.
+[[tool.mypy.overrides]]
+module = "cluster_canary.serving.service"
+disallow_untyped_decorators = false
+
 # --- Pytest -----------------------------------------------------------------
 [tool.pytest.ini_options]
 minversion = "8.0"

@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-canary
+  namespace: argocd
+  # Sync waves: serve the predictor before the action-router consumes it.
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/sharankumarreddyk/cluster-canary
+    targetRevision: main
+    path: infra/helm/cluster-canary
+    helm:
+      releaseName: cluster-canary
+      valueFiles:
+        - values.yaml
+      # Production overrides live in a separate file mounted via Argo's
+      # `helm.values` or `helm.valuesObject`; commit non-secret overrides
+      # to a `production/values-production.yaml` file when promoting.
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cluster-canary
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+  revisionHistoryLimit: 5
